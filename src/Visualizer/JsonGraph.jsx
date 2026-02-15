@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
-import { ReactFlow, Controls, Background, useNodesState, useEdgesState, Position, ReactFlowProvider, useReactFlow, getNodesBounds, getViewportForBounds } from '@xyflow/react';
+import { ReactFlow, Controls, Background, useNodesState, useEdgesState, Position, ReactFlowProvider, useReactFlow, getNodesBounds } from '@xyflow/react';
 import { toPng } from 'html-to-image';
 import dagre from 'dagre';
 import '@xyflow/react/dist/style.css';
@@ -457,6 +457,11 @@ const JsonGraphInner = forwardRef(({ data, onShowLogic }, ref) => {
           // [DSA] Path Finding (Backtracking)
           // For every match, we must traverse UP the tree to ensure all parents are expanded.
           // This ensures the user can actually see the result.
+          // Helper to find parent node
+          const findParent = (childId) => Object.keys(nodeHierarchy).find(gp =>
+            nodeHierarchy[gp] && nodeHierarchy[gp].includes(childId)
+          );
+
           Object.keys(nodeHierarchy).forEach(parentId => {
             // Check if this parent points to our matching node
             if (nodeHierarchy[parentId] && nodeHierarchy[parentId].includes(node.id)) {
@@ -466,13 +471,7 @@ const JsonGraphInner = forwardRef(({ data, onShowLogic }, ref) => {
               while (currentParent) {
                 nodesToExpand.add(currentParent);
                 // Find parent of current parent (Grandparent)
-                // This lookup is technically slow O(V*E) in this specific implementation 
-                // because our adjacency list is Parent->Child (Directed), not Child->Parent.
-                // A Doubly Linked List or storing a separate "ParentMap" would optimize this to O(Depth).
-                const grandParent = Object.keys(nodeHierarchy).find(gp =>
-                  nodeHierarchy[gp] && nodeHierarchy[gp].includes(currentParent)
-                );
-                currentParent = grandParent;
+                currentParent = findParent(currentParent);
               }
             }
           });
@@ -505,7 +504,6 @@ const JsonGraphInner = forwardRef(({ data, onShowLogic }, ref) => {
 
           const isDescendantOfCollapsed = Array.from(collapsedNodes).some(collapsedId => {
             if (nodesToExpand.has(collapsedId)) return false;
-            const descendants = []; // Need efficient lookup or re-traverse
             // ... reusing the BFS check logic from existing code ...
             const queue = [collapsedId];
             while (queue.length > 0) {
@@ -641,7 +639,7 @@ const JsonGraphInner = forwardRef(({ data, onShowLogic }, ref) => {
     }, 150); // Debounce
 
     return () => clearTimeout(timeoutId);
-  }, [viewport, enableVirtualization, nodes.length]);
+  }, [viewport, enableVirtualization, nodes.length, setNodes]);
 
   useEffect(() => {
     if (data) {

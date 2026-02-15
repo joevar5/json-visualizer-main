@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import Editor from "@monaco-editor/react";
 import Toolbar from "./Toolbar";
 import "./MonoEditor.css";
@@ -10,7 +10,7 @@ const MonoEditor = ({ value, onChange, onExportImage, onRefresh, onShowLogic }) 
   const [validationMessage, setValidationMessage] = useState("");
 
   // Auto-validate and attempt to fix JSON
-  const validateAndFixJSON = (jsonString) => {
+  const validateAndFixJSON = useCallback((jsonString) => {
     if (!jsonString || jsonString.trim() === '') {
       setIsValid(false);
       setValidationMessage("Empty input");
@@ -25,8 +25,7 @@ const MonoEditor = ({ value, onChange, onExportImage, onRefresh, onShowLogic }) 
     } catch (error) {
       // Extract line and column from error message
       const positionMatch = error.message.match(/position (\d+)/);
-      const lineMatch = error.message.match(/line (\d+)/);
-      const columnMatch = error.message.match(/column (\d+)/);
+      // Removed unused matches
 
       let detailedError = error.message;
 
@@ -61,7 +60,7 @@ const MonoEditor = ({ value, onChange, onExportImage, onRefresh, onShowLogic }) 
         setValidationMessage(detailedError);
       }
     }
-  };
+  }, [onChange]); // Add onChange as dependency
 
   // Validate on value change (with performance optimization for large files)
   useEffect(() => {
@@ -82,7 +81,7 @@ const MonoEditor = ({ value, onChange, onExportImage, onRefresh, onShowLogic }) 
     }, 500); // Debounce validation
 
     return () => clearTimeout(timeoutId);
-  }, [value]);
+  }, [value, validateAndFixJSON]);
 
   function handleEditorDidMount(editor, monaco) {
     editorRef.current = editor;
