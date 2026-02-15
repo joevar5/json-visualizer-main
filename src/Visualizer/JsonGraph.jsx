@@ -53,7 +53,7 @@ const getLayoutedElements = (nodes, edges) => {
   return { nodes: layoutedNodes, edges };
 };
 
-const JsonGraphInner = forwardRef(({ data }, ref) => {
+const JsonGraphInner = forwardRef(({ data, onShowLogic }, ref) => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [collapsedNodes, setCollapsedNodes] = React.useState(new Set());
@@ -714,13 +714,13 @@ const JsonGraphInner = forwardRef(({ data }, ref) => {
         onNodeClick={onNodeClick}
         onInit={(instance) => { window.reactFlowInstance = instance; }}
         onMove={(event, viewportData) => {
-          // [DSA] Track viewport for virtualization
-          // Only update if virtualization is enabled to avoid unnecessary re-renders
           if (enableVirtualization) {
             setViewport(viewportData);
           }
         }}
         fitView
+        attributionPosition="bottom-right"
+        className="json-flow-renderer"
         minZoom={0.1}
         maxZoom={4}
         // [DSA] Only render nodes in viewport + buffer zone
@@ -731,6 +731,18 @@ const JsonGraphInner = forwardRef(({ data }, ref) => {
       >
         <Background variant="dots" color="#404040" gap={16} size={1.5} />
         <Controls />
+        <div className="graph-info-wrapper">
+          <button
+            className="graph-info-btn"
+            onClick={onShowLogic}
+            title="How does this work?"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="info-label">Interested in a deep dive?</span>
+          </button>
+        </div>
       </ReactFlow>
     </div>
   );

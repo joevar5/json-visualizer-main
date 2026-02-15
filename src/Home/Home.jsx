@@ -2,9 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import './Home.css';
 import MonoEditor from '../Editor/MonoEditor';
 import JsonGraph from '../Visualizer/JsonGraph';
+import LogicShowcase from '../components/LogicShowcase/LogicShowcase';
 
 const Home = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [showLogic, setShowLogic] = useState(false);
   const [jsonCode, setJsonCode] = useState(`{
   "personal_info": {
     "name": "Joel Varghese",
@@ -102,6 +104,8 @@ const Home = () => {
 
   return (
     <div className={`home-container ${isMobile ? 'mobile' : 'desktop'}`}>
+      <LogicShowcase isOpen={showLogic} onClose={() => setShowLogic(false)} />
+
       <div className="pane editor-pane">
         <MonoEditor
           value={jsonCode}
@@ -112,7 +116,11 @@ const Home = () => {
       </div>
 
       <div className="pane graph-pane">
-        <JsonGraph data={jsonCode} ref={jsonGraphRef} />
+        <JsonGraph
+          ref={jsonGraphRef}
+          data={jsonCode}
+          onShowLogic={() => setShowLogic(true)}
+        />
 
         {/* Author Attribution */}
         <div className="author-attribution">

@@ -11,7 +11,8 @@ const Toolbar = ({
     onExportImage,
     onRefresh,
     isValid,
-    validationMessage
+    validationMessage,
+    onShowLogic
 }) => {
     const fileInputRef = useRef(null);
 

@@ -1,0 +1,343 @@
+/* Logic Showcase Modal Styles - Antigravity Theme */
+.logic-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(16px);
+    z-index: 10000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.4s ease-out forwards;
+}
+
+.logic-modal {
+    width: 90%;
+    max-width: 900px;
+    height: 85vh;
+    background: #0a0a0a;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    box-shadow: 0 0 50px rgba(59, 130, 246, 0.15);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Header */
+.logic-header {
+    padding: 32px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.logic-title h2 {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0;
+    background: linear-gradient(90deg, #fff, #9CA3AF);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.logic-close-btn {
+    background: transparent;
+    border: none;
+    color: #6B7280;
+    cursor: pointer;
+    padding: 8px;
+    transition: color 0.2s;
+}
+
+.logic-close-btn:hover {
+    color: #fff;
+}
+
+/* Content Area - Split Layout */
+.logic-content {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+/* Left: Navigation / Progress */
+.logic-nav {
+    width: 240px;
+    background: rgba(0, 0, 0, 0.4);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 32px 0;
+    overflow-y: auto;
+}
+
+.nav-item {
+    padding: 16px 32px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #6B7280;
+    transition: all 0.3s ease;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    position: relative;
+}
+
+.nav-item:hover {
+    background: rgba(255, 255, 255, 0.03);
+    color: #D1D5DB;
+}
+
+.nav-item.active {
+    background: rgba(59, 130, 246, 0.1);
+    color: #60A5FA;
+    border-right: 2px solid #3B82F6;
+}
+
+.nav-number {
+    font-size: 10px;
+    font-weight: 700;
+    opacity: 0.5;
+    width: 20px;
+}
+
+/* Right: Visual Content */
+.logic-visual-pane {
+    flex: 1;
+    padding: 48px;
+    overflow-y: auto;
+    position: relative;
+    background: radial-gradient(circle at top right, rgba(59, 130, 246, 0.05), transparent 70%);
+}
+
+.step-content {
+    max-width: 600px;
+    margin: 0 auto;
+    animation: slideLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.step-tag {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 9999px;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    color: #60A5FA;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 24px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.step-title {
+    font-size: 36px;
+    font-weight: 600;
+    margin: 0 0 24px 0;
+    color: #fff;
+}
+
+.step-description {
+    font-size: 16px;
+    line-height: 1.8;
+    color: #9CA3AF;
+    margin-bottom: 40px;
+}
+
+/* Interactive Visual Elements */
+.visual-block {
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 24px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    color: #A5B4FC;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.visual-block::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #3B82F6, #8B5CF6);
+}
+
+.code-line {
+    display: block;
+    margin-bottom: 8px;
+    padding-left: 16px;
+    border-left: 2px solid transparent;
+}
+
+.code-line.highlight {
+    border-left-color: #3B82F6;
+    background: rgba(59, 130, 246, 0.1);
+    color: #fff;
+}
+
+.concept-diagram {
+    display: flex;
+    gap: 16px;
+    margin-top: 32px;
+}
+
+.diagram-node {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    background: #1F2937;
+    border: 1px solid #374151;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 600;
+    position: relative;
+}
+
+.diagram-node.active {
+    background: #3B82F6;
+    border-color: #60A5FA;
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+}
+
+/* Animations */
+@keyframes slideLeft {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+/* Content Additions */
+.step-why {
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 3px solid #F59E0B; /* Amber/Yellow for 'Why' */
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.step-why h4 {
+  margin: 0 0 8px 0;
+  color: #FBBF24;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.step-why p {
+  margin: 0;
+  color: #D1D5DB;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.step-links {
+  margin-bottom: 32px;
+}
+
+.step-links h4 {
+  margin: 0 0 12px 0;
+  color: #10B981; /* Green for Learning */
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.links-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.leetcode-link {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(16, 185, 129, 0.1);
+  color: #34D399; /* Emerald Green */
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  padding: 8px 16px;
+  border-radius: 9999px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.leetcode-link:hover {
+  background: rgba(16, 185, 129, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+/* --- Professional Minimalism Override --- */
+.step-why {
+  background: transparent;
+  border-left: 2px solid #3b82f6; /* Subtle Blue accent */
+  padding: 0 0 0 16px; /* Just indentation */
+  margin-bottom: 32px;
+  border-radius: 0;
+}
+
+.step-why h4 {
+  color: #94a3b8; /* Muted Slate-400 */
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.step-why p {
+  color: #e2e8f0; /* Near White */
+  font-size: 15px; /* Slightly larger for readability */
+  line-height: 1.7;
+  font-weight: 400;
+}
+
+.step-links h4 {
+  color: #94a3b8; /* Muted Slate-400 */
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.leetcode-link {
+  background: transparent;
+  border: 1px solid #334155; /* Slate-700 border */
+  color: #cbd5e1; /* Slate-300 text */
+  font-family: 'Consolas', monospace; /* Tech feel */
+  font-size: 12px;
+  padding: 6px 12px;
+  transition: all 0.2s ease;
+}
+
+.leetcode-link:hover {
+  border-color: #60a5fa; /* Blue border on hover */
+  color: #60a5fa; /* Blue text */
+  background: rgba(59, 130, 246, 0.05); /* Very subtle blue tint */
+  transform: none; /* Remove bounce */
+  box-shadow: none; /* Remove shadow */
+}

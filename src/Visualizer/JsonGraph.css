@@ -246,3 +246,73 @@
 }
 
 /* End of file */
+/* Logic Info Button */
+.graph-info-wrapper {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+}
+
+.graph-info-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, rgba(45, 45, 45, 0.95) 0%, rgba(30, 30, 30, 0.95) 100%);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(68, 68, 68, 0.6);
+  color: #a1a1aa;
+  /* Using the same text color as 'Created by' */
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: 'Consolas', 'Monaco', monospace;
+  /* Matching font */
+  font-size: 12px;
+  font-weight: 400;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.graph-info-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  border-color: rgba(59, 130, 246, 0.5);
+  color: #fff;
+}
+
+.graph-info-btn svg {
+  stroke: #a1a1aa;
+  transition: stroke 0.2s;
+}
+
+.graph-info-btn:hover svg {
+  stroke: #60A5FA;
+}
+/* Info Label Underline Animation */
+.graph-info-btn .info-label {
+  position: relative;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.graph-info-btn .info-label::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #3b82f6, #60a5fa); /* Blue gradient */
+  transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); /* Smooth ease-out */
+}
+
+/* Trigger animation on button hover */
+.graph-info-btn:hover .info-label::after {
+  width: 100%;
+}
+
+.graph-info-btn:hover .info-label {
+  color: #60a5fa; /* Light blue text on hover */
+  text-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
+}
