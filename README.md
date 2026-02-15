@@ -1,5 +1,9 @@
 # JSON Trace
 
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://json-trace.netlify.app)
+
+**Live App:** [json-trace.netlify.app](https://json-trace.netlify.app)
+
 Raw JSON is great for machines, but reading through thousands of lines of curly braces is a nightmare for humans. **JSON Trace** turns that wall of text into an interactive, explorable map.
 
 I built this tool to solve a simple problem: making complex data structures actually understandable. Whether you're debugging a massive API response or explaining a schema to your team, this tool helps you see the forest *and* the trees.
