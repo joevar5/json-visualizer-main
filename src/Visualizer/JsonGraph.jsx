@@ -61,6 +61,30 @@ const JsonGraphInner = forwardRef(({ data, onShowLogic }, ref) => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [matchedNodes, setMatchedNodes] = React.useState([]);
   const [currentMatchIndex, setCurrentMatchIndex] = React.useState(0);
+  const [contextMenu, setContextMenu] = React.useState(null); // [DSA] Context Menu State
+  const [hoverInfo, setHoverInfo] = React.useState(null); // [DSA] Hover Trace Tooltip State
+  const [showFeatures, setShowFeatures] = React.useState(false); // Features Modal State
+  const [hasSeenFeatures, setHasSeenFeatures] = React.useState(() => {
+    try {
+      return localStorage.getItem('hasSeenFeatures') === 'true';
+    } catch (e) { return false; }
+  });
+  // [DSA] Responsive Check - Increased threshold to account for Sidebar + Center Search
+  const [isSmallScreen, setIsSmallScreen] = React.useState(typeof window !== 'undefined' ? window.innerWidth < 1350 : false);
+
+  React.useEffect(() => {
+    const handleResize = () => setIsSmallScreen(window.innerWidth < 1350);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleShowFeatures = useCallback(() => {
+    setShowFeatures(true);
+    if (!hasSeenFeatures) {
+      setHasSeenFeatures(true);
+      localStorage.setItem('hasSeenFeatures', 'true');
+    }
+  }, [hasSeenFeatures]);
   const { getNodes } = useReactFlow();
 
   // Constants for graph limits
@@ -197,7 +221,8 @@ const JsonGraphInner = forwardRef(({ data, onShowLogic }, ref) => {
             label,
             isObject,
             hasChildren: isObject && value !== null,
-            collapsedHidden: false // Track logical visibility
+            collapsedHidden: false, // Track logical visibility
+            parentId // [DSA] Keep track of parent for virtualization path finding
           },
           position: { x: 0, y: 0 },
           type: 'default',
@@ -578,6 +603,125 @@ const JsonGraphInner = forwardRef(({ data, onShowLogic }, ref) => {
     }, 50);
   }, [matchedNodes, currentMatchIndex, setNodes]);
 
+  // [DSA] Context Menu Handler
+  const onNodeContextMenu = useCallback((event, node) => {
+    event.preventDefault();
+    setHoverInfo(null); // [Fix] Immediately clear hover info when opening context menu
+    const pane = document.querySelector('.json-graph-container').getBoundingClientRect();
+
+    // [DSA] Find "Main Section" (Top-level ancestor below Root)
+    // Useful for jumping out of deep nesting (e.g. from "City" back to "Users")
+    let mainSection = null;
+    let current = node;
+    let depth = 0;
+
+    // Traverse up
+    while (current && current.data && current.data.parentId && depth < 20) {
+      // If parent is Root, then THIS node is the Main Section
+      if (current.data.parentId === 'node-0') {
+        mainSection = current;
+        break;
+      }
+
+      const parentId = current.data.parentId;
+      const parent = nodes.find(n => n.id === parentId);
+      if (parent) {
+        current = parent;
+      } else {
+        break;
+      }
+      depth++;
+    }
+
+    setContextMenu({
+      id: node.id,
+      x: event.clientX - pane.left,
+      y: event.clientY - pane.top,
+      node: node,
+      mainSection: (mainSection && mainSection.id !== node.id) ? mainSection : null
+    });
+  }, [nodes]);
+
+  const closeContextMenu = useCallback(() => setContextMenu(null), []);
+
+  // [DSA] Hover Handler for Trace Tooltip
+  const onNodeMouseEnter = useCallback((event, node) => {
+    // [Fix] Do not show tooltip if context menu is active
+    if (contextMenu) return;
+
+    // Only show trace for non-root nodes
+    if (node.id === 'node-0') return;
+
+    const path = [];
+    let curr = node;
+    let depth = 0;
+
+    // Traverse UP to build path
+    while (curr && curr.data && curr.data.parentId && depth < 10) { // Limit depth for tooltip
+      const pid = curr.data.parentId;
+      const parent = nodes.find(n => n.id === pid);
+      if (parent) {
+        // Clean label
+        let label = parent.data.label.replace(/^[▼▶]\s/, '');
+        // Truncate long labels
+        if (label.length > 20) label = label.substring(0, 20) + '...';
+        path.unshift(label);
+        curr = parent;
+      } else break;
+      depth++;
+    }
+
+    // Current node label
+    let currentLabel = node.data.label.replace(/^[▼▶]\s/, '');
+    if (currentLabel.length > 30) currentLabel = currentLabel.substring(0, 30) + '...';
+
+    const pane = document.querySelector('.json-graph-container').getBoundingClientRect();
+
+    setHoverInfo({
+      x: event.clientX - pane.left + 20,
+      y: event.clientY - pane.top,
+      path,
+      label: currentLabel
+    });
+  }, [nodes, contextMenu]);
+
+  const onNodeMouseLeave = useCallback(() => setHoverInfo(null), []);
+
+
+  const handleJumpToNode = useCallback((targetId) => {
+    closeContextMenu();
+
+    if (!targetId) return;
+
+    const rf = window.reactFlowInstance;
+    const targetNode = rf.getNode(targetId);
+
+    if (targetNode) {
+      // 1. Center View on Target
+      const x = targetNode.position.x + (targetNode.width || 220) / 2;
+      const y = targetNode.position.y + (targetNode.height || 60) / 2;
+
+      rf.setCenter(x, y, { zoom: 1.2, duration: 800 });
+
+      // 2. Flash Highlight
+      setNodes(nds => nds.map(n => ({
+        ...n,
+        style: n.id === targetId
+          ? { ...n.style, outline: '3px solid #3b82f6', outlineOffset: '4px', transition: 'all 0.3s' }
+          : { ...n.style, outline: 'none' }
+      })));
+
+      setTimeout(() => {
+        setNodes(nds => nds.map(n => ({
+          ...n,
+          style: { ...n.style, outline: 'none' }
+        })));
+      }, 2000);
+    }
+  }, [closeContextMenu, setNodes]);
+
+
+
   // [DSA] Virtualization Effect
   // Updates node visibility when viewport changes
   useEffect(() => {
@@ -599,47 +743,66 @@ const JsonGraphInner = forwardRef(({ data, onShowLogic }, ref) => {
         height: height / viewport.zoom + (buffer * 2)
       };
 
-      setNodes(nds => nds.map(node => {
-        // Optimization: Skip calculation if logically hidden by collapse
-        if (node.data.collapsedHidden) {
-          // Ensure it remains hidden
-          return node.hidden ? node : { ...node, hidden: true };
-        }
+      setNodes(nds => {
+        // 1. Identify direct visibility & build map
+        const nodeMap = new Map();
+        const visibleIds = new Set();
 
-        // Always show the root node or special warnings
-        if (node.id === 'node-0' || node.type === 'node-warning') return { ...node, hidden: false };
+        // Use 'nds' (current nodes) to ensure we have latest positions
+        nds.forEach(n => {
+          nodeMap.set(n.id, n);
+          // Always show root and warnings
+          if (n.id === 'node-0' || n.type === 'node-warning') { visibleIds.add(n.id); return; }
 
-        // Simple bounding box intersection check
-        const nodeX = node.position.x;
-        const nodeY = node.position.y;
-        // Assume default node size if not set yet
-        const nodeW = node.width || 220;
-        const nodeH = node.height || 60;
+          if (n.data.collapsedHidden) return; // Skip logically hidden
 
-        const isVisible =
-          nodeX + nodeW > visibleRect.x &&
-          nodeX < visibleRect.x + visibleRect.width &&
-          nodeY + nodeH > visibleRect.y &&
-          nodeY < visibleRect.y + visibleRect.height;
+          const nx = n.position.x;
+          const ny = n.position.y;
+          const nw = n.width || 220;
+          const nh = n.height || 60;
 
-        // Final visibility = Logically Visible AND Viewport Visible
-        // Since we already filtered for !collapsedHidden, we just check isVisible
-        const shouldHide = !isVisible;
+          // Check intersection
+          if (
+            nx + nw > visibleRect.x &&
+            nx < visibleRect.x + visibleRect.width &&
+            ny + nh > visibleRect.y &&
+            ny < visibleRect.y + visibleRect.height
+          ) {
+            visibleIds.add(n.id);
+          }
+        });
 
-        // Only update if visibility changes to avoid unnecessary re-renders
-        if (node.hidden !== shouldHide) {
-          return {
-            ...node,
-            hidden: shouldHide
-          };
-        }
+        // 2. Ancestry Protection: Ensure parents of visible nodes are also visible
+        // This prevents edges from disappearing when the parent is off-screen
+        const finalVisible = new Set(visibleIds);
+        visibleIds.forEach(id => {
+          let curr = nodeMap.get(id);
+          // Traverse up the tree
+          while (curr && curr.data && curr.data.parentId) {
+            const pid = curr.data.parentId;
+            if (finalVisible.has(pid)) break; // Already visited this path
+            finalVisible.add(pid);
+            curr = nodeMap.get(pid);
+          }
+        });
 
-        return node;
-      }));
+        // 3. Apply changes
+        return nds.map(node => {
+          if (node.data.collapsedHidden) {
+            return node.hidden ? node : { ...node, hidden: true };
+          }
+
+          const shouldHide = !finalVisible.has(node.id);
+          if (node.hidden !== shouldHide) {
+            return { ...node, hidden: shouldHide };
+          }
+          return node;
+        });
+      });
     }, 150); // Debounce
 
     return () => clearTimeout(timeoutId);
-  }, [viewport, enableVirtualization, nodes.length, setNodes]);
+  }, [viewport, enableVirtualization, nodes, setNodes]);
 
   useEffect(() => {
     if (data) {
@@ -654,8 +817,8 @@ const JsonGraphInner = forwardRef(({ data, onShowLogic }, ref) => {
 
   return (
     <div className="json-graph-container">
-      {/* Search Bar */}
-      <div className="search-bar">
+      {/* Search Bar - Top Center */}
+      <div className="search-bar" style={{ position: 'absolute', top: 20, left: '50%', transform: 'translateX(-50%)', zIndex: 10 }}>
         <div className="search-input-container">
           <svg className="search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path d="M7 12C9.76142 12 12 9.76142 12 7C12 4.23858 9.76142 2 7 2C4.23858 2 2 4.23858 2 7C2 9.76142 4.23858 12 7 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -667,6 +830,18 @@ const JsonGraphInner = forwardRef(({ data, onShowLogic }, ref) => {
             placeholder="Search keys and values..."
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                navigateSearch(e.shiftKey ? 'prev' : 'next');
+              } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                navigateSearch('next');
+              } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                navigateSearch('prev');
+              }
+            }}
           />
           {searchQuery && (
             <button
@@ -710,6 +885,10 @@ const JsonGraphInner = forwardRef(({ data, onShowLogic }, ref) => {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeClick={onNodeClick}
+        onNodeContextMenu={onNodeContextMenu}
+        onNodeMouseEnter={onNodeMouseEnter}
+        onNodeMouseLeave={onNodeMouseLeave}
+        onPaneClick={closeContextMenu}
         onInit={(instance) => { window.reactFlowInstance = instance; }}
         onMove={(event, viewportData) => {
           if (enableVirtualization) {
@@ -729,18 +908,194 @@ const JsonGraphInner = forwardRef(({ data, onShowLogic }, ref) => {
       >
         <Background variant="dots" color="#404040" gap={16} size={1.5} />
         <Controls />
-        <div className="graph-info-wrapper">
+
+        {/* Features Button - Icon Only, Above Controls (Bottom Left) */}
+        <button
+          className={`graph-info-btn feature-icon-btn ${!hasSeenFeatures ? 'feature-btn-glow' : ''}`}
+          onClick={handleShowFeatures}
+          title={!hasSeenFeatures ? "New Features Available!" : "Features"}
+          style={{
+            position: 'absolute',
+            bottom: 145, // roughly above the 4 control buttons
+            left: 15,
+            zIndex: 10,
+            padding: 8,
+            width: 36,
+            height: 36,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: '#2B2B2B',
+            border: '1px solid #555',
+            borderRadius: 4,
+            boxShadow: '0 2px 5px rgba(0,0,0,0.3)'
+          }}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: '#60a5fa' }}>
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+          </svg>
+        </button>
+
+        {/* Deep Dive Button - Top Right with Auto-Collapse */}
+        <div className="graph-info-wrapper" style={{ position: 'absolute', top: 20, right: 20, zIndex: 10 }}>
           <button
             className="graph-info-btn"
             onClick={onShowLogic}
             title="How does this work?"
+            style={{
+              transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+              maxWidth: (searchQuery || isSmallScreen) ? '42px' : '280px',
+              padding: (searchQuery || isSmallScreen) ? '8px' : '8px 16px',
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              whiteSpace: 'nowrap'
+            }}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            {/* Show Question Mark when searching, Info 'i' when expanded? Or just consistent Question Mark? */}
+            {/* User asked for Question Mark icon */}
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ minWidth: 20 }}>
+              <circle cx="12" cy="12" r="10" />
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
-            <span className="info-label">Interested in a deep dive?</span>
+
+            <span
+              className="info-label"
+              style={{
+                marginLeft: 10,
+                opacity: (searchQuery || isSmallScreen) ? 0 : 1,
+                transition: 'opacity 0.2s',
+                pointerEvents: (searchQuery || isSmallScreen) ? 'none' : 'auto'
+              }}
+            >
+              Interested in a deep dive?
+            </span>
           </button>
         </div>
+
+        {/* Features Modal */}
+        {showFeatures && (
+          <div className="features-backdrop" onClick={() => setShowFeatures(false)}>
+            <div className="features-modal" onClick={e => e.stopPropagation()}>
+              <div className="features-header">
+                <h2>Power Features</h2>
+                <button className="close-btn" onClick={() => setShowFeatures(false)}>✕</button>
+              </div>
+
+              <div className="feature-list">
+                <div className="feature-item">
+                  <div className="feature-icon-wrapper">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </div>
+                  <div className="feature-content">
+                    <h4>Smart Trace on Hover</h4>
+                    <p>Hover over any node to simply visualize its full path from Root. Never get lost in deep JSON again.</p>
+                  </div>
+                </div>
+
+                <div className="feature-item">
+                  <div className="feature-icon-wrapper" style={{ color: '#a855f7', borderColor: 'rgba(168, 85, 247, 0.2)', background: 'rgba(168, 85, 247, 0.1)' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 19V5M5 12l7-7 7 7" />
+                    </svg>
+                  </div>
+                  <div className="feature-content">
+                    <h4>Context Navigation</h4>
+                    <p>Right-click any node to instantly jump to its <b>Parent</b>, <b>Main Section</b>, or back to <b>Root</b>.</p>
+                  </div>
+                </div>
+
+                <div className="feature-item">
+                  <div className="feature-icon-wrapper" style={{ color: '#f59e0b', borderColor: 'rgba(245, 158, 11, 0.2)', background: 'rgba(245, 158, 11, 0.1)' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <div className="feature-content">
+                    <h4>Deep Search</h4>
+                    <p>Type to find any key or value. Navigate results with <code>Enter</code> or <code>Arrow Keys</code> (Up/Down).</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {contextMenu && (
+          <div
+            className="context-menu"
+            style={{ top: contextMenu.y, left: contextMenu.x }}
+            onMouseLeave={closeContextMenu}
+          >
+            <div className="context-menu-header">Jump To</div>
+
+            {/* 1. Go to Parent */}
+            {contextMenu.node.data.parentId ? (
+              <div
+                className="context-menu-item"
+                onClick={() => handleJumpToNode(contextMenu.node.data.parentId)}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 19V5M5 12l7-7 7 7" />
+                </svg>
+                Go to Parent
+              </div>
+            ) : (
+              <div className="context-menu-item disabled" style={{ opacity: 0.5 }}>Is Root</div>
+            )}
+
+            {/* 2. Go to Main Section (if applicable and different from Parent) */}
+            {contextMenu.mainSection &&
+              contextMenu.mainSection.id !== contextMenu.node.data.parentId && (
+                <div
+                  className="context-menu-item"
+                  onClick={() => handleJumpToNode(contextMenu.mainSection.id)}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M4 6h16M4 12h16M4 18h7" />
+                  </svg>
+                  Go to {contextMenu.mainSection.data.label.split(' ')[0]}
+                </div>
+              )}
+
+            {/* 3. Go to Root (if not already at Root or Main Section) */}
+            {contextMenu.node.id !== 'node-0' &&
+              (!contextMenu.mainSection || contextMenu.mainSection.data.parentId !== 'node-0') && (
+                <div
+                  className="context-menu-item"
+                  onClick={() => handleJumpToNode('node-0')}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                  </svg>
+                  Go to Root
+                </div>
+              )}
+          </div>
+        )}
+
+        {/* [DSA] Hover Trace Tooltip - [Fix] only if no context menu */}
+        {hoverInfo && !contextMenu && (
+          <div
+            className="trace-tooltip"
+            style={{ top: hoverInfo.y, left: hoverInfo.x }}
+          >
+            <div className="trace-title">Logic Trace Path</div>
+            <div className="trace-path">
+              {hoverInfo.path.map((segment, index) => (
+                <React.Fragment key={index}>
+                  <span className="trace-segment">{segment}</span>
+                  <span className="trace-arrow">➞</span>
+                </React.Fragment>
+              ))}
+              <span className="trace-segment trace-current">{hoverInfo.label}</span>
+            </div>
+          </div>
+        )}
       </ReactFlow>
     </div>
   );
