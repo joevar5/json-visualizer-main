@@ -45,3 +45,7 @@ We chose a **Left-to-Right (Horizontal)** layout over Top-Down.
 - Backend Developer | ML Engineer
 - [GitHub](https://github.com/joevar5)
 - [LinkedIn](https://www.linkedin.com/in/joel-eapen/)
+
+## Inspiration
+
+Inspired by [json-visualizer](https://github.com/harshdesai695/json-visualizer) by Harsh Desai.
