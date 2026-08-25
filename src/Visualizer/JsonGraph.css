@@ -7,6 +7,37 @@
   position: relative;
 }
 
+.graph-processing-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: rgba(26, 26, 26, 0.85);
+  backdrop-filter: blur(2px);
+  color: #a1a1aa;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 13px;
+}
+
+.graph-processing-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #3d3d3d;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: graph-processing-spin 0.8s linear infinite;
+}
+
+@keyframes graph-processing-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Search Bar Styles */
 .search-bar {
   position: absolute;
@@ -510,6 +541,35 @@
   color: #f1f5f9;
   font-size: 15px;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.feature-new-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5);
+  animation: feature-new-pulse 2s ease-out infinite;
+}
+
+@keyframes feature-new-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
 }
 
 .feature-content p {

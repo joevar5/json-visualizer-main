@@ -3,7 +3,17 @@ import Editor from "@monaco-editor/react";
 import Toolbar from "./Toolbar";
 import "./MonoEditor.css";
 
-const MonoEditor = ({ value, onChange, onExportImage, onRefresh, onShowLogic }) => {
+const MonoEditor = ({
+  value,
+  onChange,
+  onExportImage,
+  onRefresh,
+  onShowLogic,
+  recentDocuments,
+  onLoadRecent,
+  onRemoveRecent,
+  onClearRecent,
+}) => {
   const editorRef = useRef(null);
   const containerRef = useRef(null);
   const [isValid, setIsValid] = useState(true);
@@ -180,6 +190,10 @@ const MonoEditor = ({ value, onChange, onExportImage, onRefresh, onShowLogic }) 
         onShowLogic={onShowLogic}
         isValid={isValid}
         validationMessage={validationMessage}
+        recentDocuments={recentDocuments}
+        onLoadRecent={onLoadRecent}
+        onRemoveRecent={onRemoveRecent}
+        onClearRecent={onClearRecent}
       />
 
       <div className="editor-wrapper">

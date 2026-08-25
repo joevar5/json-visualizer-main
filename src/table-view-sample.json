@@ -1,0 +1,19 @@
+{
+  "team": "Platform Engineering",
+  "employees": [
+    { "id": 1, "name": "Ava Thompson", "role": "Engineer", "years": 3.5, "active": true },
+    { "id": 2, "name": "Liam Rodriguez", "role": "Designer", "years": 1.2, "active": true },
+    { "id": 3, "name": "Noah Kim", "role": "Manager", "years": 6.0, "active": false },
+    { "id": 4, "name": "Emma Davis", "role": "Engineer", "years": 0.8, "active": true },
+    { "id": 5, "name": "Olivia Chen", "role": "QA", "years": 2.4, "active": true },
+    { "id": 6, "name": "Ethan Brooks", "role": "Engineer", "years": 4.1, "active": false },
+    { "id": 7, "name": "Sophia Patel", "role": "Designer", "years": 1.9, "active": true },
+    { "id": 8, "name": "Mason Lee", "role": "Manager", "years": 5.3, "active": true }
+  ],
+  "tags": ["backend", "infra", "2026"],
+  "budget": {
+    "currency": "USD",
+    "amount": 250000,
+    "approved": true
+  }
+}

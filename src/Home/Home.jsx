@@ -2,12 +2,18 @@ import React, { useState, useEffect, useRef } from 'react';
 import './Home.css';
 import MonoEditor from '../Editor/MonoEditor';
 import JsonGraph from '../Visualizer/JsonGraph';
+import TreeView from '../Visualizer/TreeView';
 import LogicShowcase from '../components/LogicShowcase/LogicShowcase';
+import {
+  loadCurrentDocument,
+  saveCurrentDocument,
+  loadRecentDocuments,
+  addRecentDocument,
+  removeRecentDocument,
+  clearRecentDocuments,
+} from '../utils/jsonPersistence';
 
-const Home = () => {
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  const [showLogic, setShowLogic] = useState(false);
-  const [jsonCode, setJsonCode] = useState(`{
+const DEFAULT_JSON = `{
   "personal_info": {
     "name": "Joel Varghese",
     "title": "Backend Developer | ML Engineer",
@@ -36,8 +42,34 @@ const Home = () => {
       "Generative AI"
     ]
   }
-}`);
+}`;
+
+const Home = () => {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [showLogic, setShowLogic] = useState(false);
+  const [viewMode, setViewMode] = useState('graph'); // 'graph' | 'tree'
+  const [jsonCode, setJsonCode] = useState(() => loadCurrentDocument() || DEFAULT_JSON);
+  const [recentDocuments, setRecentDocuments] = useState(() => loadRecentDocuments());
   const jsonGraphRef = useRef(null);
+
+  // Auto-save the working document so a refresh never loses your work.
+  useEffect(() => {
+    const timeoutId = setTimeout(() => saveCurrentDocument(jsonCode), 500);
+    return () => clearTimeout(timeoutId);
+  }, [jsonCode]);
+
+  // Snapshot into "recent documents" once editing has settled, so we don't
+  // spam the history on every keystroke.
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setRecentDocuments((prev) => addRecentDocument(prev, jsonCode));
+    }, 5000);
+    return () => clearTimeout(timeoutId);
+  }, [jsonCode]);
+
+  const handleLoadRecent = (content) => setJsonCode(content);
+  const handleRemoveRecent = (id) => setRecentDocuments((prev) => removeRecentDocument(prev, id));
+  const handleClearRecent = () => setRecentDocuments(clearRecentDocuments());
 
   useEffect(() => {
     const handleResize = () => {
@@ -112,15 +144,40 @@ const Home = () => {
           onChange={setJsonCode}
           onExportImage={handleExportImage}
           onRefresh={handleRefresh}
+          recentDocuments={recentDocuments}
+          onLoadRecent={handleLoadRecent}
+          onRemoveRecent={handleRemoveRecent}
+          onClearRecent={handleClearRecent}
         />
       </div>
 
       <div className="pane graph-pane">
-        <JsonGraph
-          ref={jsonGraphRef}
-          data={jsonCode}
-          onShowLogic={() => setShowLogic(true)}
-        />
+        <div className="view-mode-switcher">
+          <button
+            className={`view-mode-btn ${viewMode === 'graph' ? 'active' : ''}`}
+            onClick={() => setViewMode('graph')}
+          >
+            Graph View
+          </button>
+          <button
+            className={`view-mode-btn ${viewMode === 'tree' ? 'active' : ''}`}
+            onClick={() => setViewMode('tree')}
+          >
+            Tree View
+          </button>
+        </div>
+
+        <div className="view-mode-content">
+          {viewMode === 'graph' ? (
+            <JsonGraph
+              ref={jsonGraphRef}
+              data={jsonCode}
+              onShowLogic={() => setShowLogic(true)}
+            />
+          ) : (
+            <TreeView data={jsonCode} />
+          )}
+        </div>
 
         {/* Author Attribution */}
         <div className="author-attribution">

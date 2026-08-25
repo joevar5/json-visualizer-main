@@ -97,6 +97,11 @@ const JsonGraphInner = forwardRef(({ data, onShowLogic }, ref) => {
   const [enableVirtualization] = React.useState(true);
   const [viewport, setViewport] = React.useState({ x: 0, y: 0, zoom: 1 });
 
+  // Large JSON (parse + DFS traversal + dagre layout) is expensive and would
+  // otherwise block the main thread with no feedback. Deferring one tick lets
+  // the "Processing..." overlay paint before the heavy work runs.
+  const [isProcessing, setIsProcessing] = React.useState(false);
+
 
   useImperativeHandle(ref, () => ({
     exportAsImage: async () => {
@@ -810,13 +815,28 @@ const JsonGraphInner = forwardRef(({ data, onShowLogic }, ref) => {
       setSearchQuery('');
       setMatchedNodes([]);
       setCurrentMatchIndex(0);
+      setIsProcessing(true);
 
-      processGraph(data);
+      // Defer to the next tick so React can paint the "Processing..." overlay
+      // before the synchronous parse/traverse/layout work blocks the thread.
+      const timeoutId = setTimeout(() => {
+        processGraph(data);
+        setIsProcessing(false);
+      }, 0);
+
+      return () => clearTimeout(timeoutId);
     }
   }, [data, processGraph]);
 
   return (
     <div className="json-graph-container">
+      {isProcessing && (
+        <div className="graph-processing-overlay">
+          <div className="graph-processing-spinner" />
+          <span>Processing large JSON…</span>
+        </div>
+      )}
+
       {/* Search Bar - Top Center */}
       <div className="search-bar" style={{ position: 'absolute', top: 20, left: '50%', transform: 'translateX(-50%)', zIndex: 10 }}>
         <div className="search-input-container">
@@ -911,9 +931,9 @@ const JsonGraphInner = forwardRef(({ data, onShowLogic }, ref) => {
 
         {/* Features Button - Icon Only, Above Controls (Bottom Left) */}
         <button
-          className={`graph-info-btn feature-icon-btn ${!hasSeenFeatures ? 'feature-btn-glow' : ''}`}
+          className="graph-info-btn feature-icon-btn feature-btn-glow"
           onClick={handleShowFeatures}
-          title={!hasSeenFeatures ? "New Features Available!" : "Features"}
+          title="New Features Available!"
           style={{
             position: 'absolute',
             bottom: 145, // roughly above the 4 control buttons
@@ -1018,6 +1038,20 @@ const JsonGraphInner = forwardRef(({ data, onShowLogic }, ref) => {
                   <div className="feature-content">
                     <h4>Deep Search</h4>
                     <p>Type to find any key or value. Navigate results with <code>Enter</code> or <code>Arrow Keys</code> (Up/Down).</p>
+                  </div>
+                </div>
+
+                <div className="feature-item">
+                  <div className="feature-icon-wrapper" style={{ color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.2)', background: 'rgba(16, 185, 129, 0.1)' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M9 4H5a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V5a1 1 0 00-1-1z" />
+                      <path d="M9 14H5a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1v-4a1 1 0 00-1-1z" />
+                      <path d="M4 6h1M4 16h1M9 6h11M9 16h11" />
+                    </svg>
+                  </div>
+                  <div className="feature-content">
+                    <h4>Tree View <span className="feature-new-badge">NEW</span></h4>
+                    <p>Switch to a collapsible tree for a classic read: search, sort keys, copy any node's path, and flip large arrays into a sortable table.</p>
                   </div>
                 </div>
               </div>

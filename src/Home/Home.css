@@ -26,6 +26,8 @@
 .desktop .graph-pane {
   width: 70%;
   height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 /* --- Mobile Layout (Vertical) --- */
@@ -42,6 +44,50 @@
 .mobile .graph-pane {
   width: 100%;
   height: 50%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- View Mode Switcher --- */
+.view-mode-switcher {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 12px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #2d2d2d 0%, #1e1e1e 100%);
+  border-bottom: 1px solid #333;
+}
+
+.view-mode-btn {
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #a1a1aa;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.view-mode-btn:hover {
+  color: #e0e0e0;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.view-mode-btn.active {
+  background: #3b82f6;
+  color: #fff;
+}
+
+.view-mode-content {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* --- Author Attribution --- */

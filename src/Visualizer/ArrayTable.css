@@ -1,0 +1,120 @@
+.at-wrapper {
+  margin: 4px 0 4px calc(8px + (var(--depth, 1) + 1) * 18px);
+  border: 1px solid #333;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #1a1a1a;
+}
+
+.at-empty {
+  padding: 12px;
+  color: #666;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.at-scroll {
+  overflow: auto;
+  max-height: 480px;
+}
+
+.at-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-family: 'Consolas', 'Monaco', monospace;
+}
+
+.at-table thead th {
+  position: sticky;
+  top: 0;
+  background: #2d2d2d;
+  color: #9cdcfe;
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 1px solid #3d3d3d;
+  white-space: nowrap;
+  z-index: 1;
+}
+
+.at-sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.at-sortable:hover {
+  background: #3d3d3d;
+}
+
+.at-sort-arrow {
+  color: #3b82f6;
+}
+
+.at-table td {
+  padding: 5px 10px;
+  border-bottom: 1px solid #262626;
+  color: #e0e0e0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+}
+
+.at-table tbody tr:hover {
+  background: #232323;
+}
+
+.at-index-col {
+  color: #666;
+  text-align: right;
+  width: 1%;
+}
+
+.at-actions-col {
+  width: 1%;
+  text-align: right;
+}
+
+.at-table tbody tr .at-actions-col {
+  opacity: 0;
+}
+
+.at-table tbody tr:hover .at-actions-col {
+  opacity: 1;
+}
+
+.at-cell-empty {
+  color: #555;
+}
+
+.at-cell-badge {
+  color: #6a9955;
+  cursor: default;
+}
+
+.at-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 10px;
+  background: #202020;
+  border-top: 1px solid #333;
+  font-size: 11px;
+  color: #a1a1aa;
+}
+
+.at-load-more {
+  padding: 4px 10px;
+  background: #2d2d2d;
+  border: 1px solid #3d3d3d;
+  border-radius: 4px;
+  color: #e0e0e0;
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.at-load-more:hover {
+  background: #3d3d3d;
+}
